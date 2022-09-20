@@ -57,7 +57,7 @@ class Result {
 
 }
 
-public class NewYearChaos {
+public class MinimumBribes {
     public static void main(String[] args) throws IOException {
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
 
