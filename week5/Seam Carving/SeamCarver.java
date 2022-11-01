@@ -4,8 +4,6 @@ import java.awt.Color;
 
 public class SeamCarver {
     private Picture picture;
-    private double[][] weight;
-    private int[][] trace;
 
     // create a seam carver object based on the given picture
     public SeamCarver(Picture picture) {
@@ -49,18 +47,22 @@ public class SeamCarver {
                 + gradient(picture.get(x, y - 1), picture.get(x, y + 1)));
     }
 
-    private void init() {
-        if(weight == null || width() * height() != weight.length * weight[0].length) {
-            weight = new double[width()][height()];
-            trace = new int[width()][height()];
+    private void exchange() {
+        Picture ans = new Picture(height(), width());
+        for (int j = 0; j < width(); ++j) {
+            for (int i = 0; i < height(); ++i) {
+                ans.setRGB(i, j, picture.getRGB(j, i));
+            }
         }
+        picture = ans;
     }
 
     // sequence of indices for horizontal seam
     public int[] findHorizontalSeam() {
         int width = width();
         int height = height();
-        init();
+        double[][] weight = new double[width][height];
+        int[][] trace = new int[width][height];
         double minWeight = Double.POSITIVE_INFINITY;
         int index = 0;
         for (int i = 0; i < width; i++) {
@@ -97,40 +99,9 @@ public class SeamCarver {
 
     // sequence of indices for vertical seam
     public int[] findVerticalSeam() {
-        int width = width();
-        int height = height();
-        init();
-        double minWeight = Double.POSITIVE_INFINITY;
-        int index = 0;
-        for (int j = 0; j < height; j++) {
-            for (int i = 0; i < width; i++) {
-                double energy = energy(i, j);
-                if (j == 0) {
-                    weight[i][j] = energy;
-                } else {
-                    weight[i][j] = Double.POSITIVE_INFINITY;
-                    for (int t = -1; t <= 1; t++) {
-                        if (i + t >= 0 && i + t < width) {
-                            if (weight[i][j] > weight[i + t][j - 1] + energy) {
-                                weight[i][j] = weight[i + t][j - 1] + energy;
-                                trace[i][j] = t;
-                            }
-                        }
-                    }
-                }
-                if (j == height - 1) {
-                    if (minWeight > weight[i][j]) {
-                        minWeight = weight[i][j];
-                        index = i;
-                    }
-                }
-            }
-        }
-        int[] arr = new int[height];
-        for (int i = height - 1; i >= 0; i--) {
-            arr[i] = index;
-            index += trace[index][i];
-        }
+        exchange();
+        int[] arr = findHorizontalSeam();
+        exchange();
         return arr;
     }
 
@@ -174,27 +145,8 @@ public class SeamCarver {
 
     // remove vertical seam from current picture
     public void removeVerticalSeam(int[] seam) {
-        if (seam == null) {
-            throw new IllegalArgumentException();
-        }
-        if (seam.length != height()) {
-            throw new IllegalArgumentException();
-        }
-        checkRange(seam);
-        if (width() <= 1) {
-            throw new IllegalArgumentException();
-        }
-        Picture newPicture = new Picture(width() - 1, height());
-        for (int j = 0; j < height(); j++) {
-            int tmp = 0;
-            for (int i = 0; i < width(); i++) {
-                if (i == seam[j]) {
-                    tmp = -1;
-                } else {
-                    newPicture.set(i + tmp, j, picture.get(i, j));
-                }
-            }
-        }
-        picture = newPicture;
+        exchange();
+        removeHorizontalSeam(seam);
+        exchange();
     }
 }
